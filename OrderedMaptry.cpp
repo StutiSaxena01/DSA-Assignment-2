@@ -1,14 +1,14 @@
 #include <iostream>
 using namespace std;
-int csize=0;
+int csize = 0;
 template <class K, class V>
 class Ordered_Map
 {
-    public:
+public:
     K key;
     V value;
-    
-    Ordered_Map<K, V> *left, *right;
+
+    Ordered_Map<K, V> *left, *right,*root=NULL;
     Ordered_Map()
     {
     }
@@ -67,7 +67,7 @@ class Ordered_Map
         int dif = lh - rh;
         return dif;
     }
-    Ordered_Map<K, V>* balance(Ordered_Map<K, V> *root)
+    Ordered_Map<K, V> *balance(Ordered_Map<K, V> *root)
     {
         int hdiff = diff(root);
         if (hdiff > 1)
@@ -86,7 +86,7 @@ class Ordered_Map
         }
         return root;
     }
-    Ordered_Map<K, V>*insert(Ordered_Map<K, V> *root, K x, V y)
+    Ordered_Map<K, V> *toinsert(Ordered_Map<K, V> *root, K x, V y)
     {
         if (root == NULL)
         {
@@ -101,28 +101,32 @@ class Ordered_Map
         }
         else if (x < root->key)
         {
-            root->left = insert(root->left, x, y);
+            root->left = toinsert(root->left, x, y);
         }
         else if (x >= root->key)
         {
-            root->right = insert(root->right, x, y);
+            root->right = toinsert(root->right, x, y);
         }
-       
+
         root = balance(root);
         // preorder(root);
         //cout << "----------mid--------"<< endl;
         return root;
     }
+    void insert(K x,V y)
+    {
+        root=toinsert(root,x,y);
+    }
     Ordered_Map<K, V> *deletion(Ordered_Map<K, V> *root, K x)
     {
         if (root == NULL)
             return root;
-    if (x > root->key)
-        root->right = deletion(root->right, x);
-    else if (x < root->key)
-        root->left = deletion(root->left, x);
-    else if (x == root->key)
-    {
+        if (x > root->key)
+            root->right = deletion(root->right, x);
+        else if (x < root->key)
+            root->left = deletion(root->left, x);
+        else if (x == root->key)
+        {
             if (root->left == NULL && root->right == NULL)
             {
                 Ordered_Map<K, V> *tmp = root;
@@ -138,43 +142,59 @@ class Ordered_Map
                     child = root->right;
 
                 root->key = child->key;
+                root->value=child->value;
                 root->left = child->left;
                 root->right = child->right;
                 free(child);
             }
             else
             {
-                /*
-             * if AVL has both child then find inOrder SUC 
-             * and copy data of inorder successor to given AVL
-             * and then delete that successor AVL. 
-             */
                 Ordered_Map<K, V> *ino_suc = root->right;
                 while (ino_suc->left != NULL)
                     ino_suc = ino_suc->left;
                 root->key = ino_suc->key;
+                root->value=ino_suc->value;
                 root->right = deletion(root->right, ino_suc->key);
             }
             csize--;
         }
-    if (root == NULL)
-        return root;
+        if (root == NULL)
+            return root;
 
-    root = balance(root);
-    return root;
+        root = balance(root);
+        return root;
     }
-    bool find(Ordered_Map<K, V> *root, K x)
+    void erase(K x)
+    {
+        root=deletion(root,x);
+    }
+    bool tofind(Ordered_Map<K, V> *root, K x)
     {
         if (root == NULL)
             return false;
         if (root->key == x)
             return true;
         else if (root->key > x)
-            return find(root->left, x);
+            return tofind(root->left, x);
         else
-            return find(root->right, x);
+            return tofind(root->right, x);
 
         return false;
+    }
+    bool find(K x)
+    {
+        return tofind(root,x);
+    }
+    Ordered_Map<K,V> *search(Ordered_Map<K, V> *root, K x)
+    {
+        if (root == NULL)
+            return root;
+        if (root->key == x)
+            return root;
+        else if (root->key > x)
+            return search(root->left, x);
+        
+            return search(root->right, x);
     }
     void inorder(Ordered_Map<K, V> *root)
     {
@@ -184,54 +204,109 @@ class Ordered_Map
         cout << root->key << " " << root->value << endl;
         inorder(root->right);
     }
-
-    
     int size()
     {
         return csize;
     }
-    
-    void deleteMap(Ordered_Map<K,V> *node)
+    Ordered_Map<K, V> * toclear(Ordered_Map<K, V> *root)
     {
-        if(node==NULL) return;
-        deleteMap(node->left);
-        deleteMap(node->right);
-        free(node);
+        if (root == NULL)
+            return root;    
+        csize = 0;
+        toclear(root->right);
+        toclear(root->left);
+
+        root->left = NULL;
+        free(root->left);
+
+        root->right = NULL;
+        free(root->right);
+
+        root = NULL;
+        free(root);
+        return root;
     }
-    void clear(Ordered_Map<K,V> *root)
+    void clear()
     {
-        deleteMap(root);
+        root=toclear(root);
+    }
+    V &operator [](K key)
+    {
+        Ordered_Map* m=search(root,key);
+        if(m)
+        return m->value;
+        else
+        {
+            V value=V{};
+            root=toinsert(root,key,value);      
+        }
+
+        Ordered_Map* m1=search(root,key);
+        return m1->value;
     }
 };
 int main()
 {
-    int n;
+    int n,c;
     cin >> n;
-    Ordered_Map<int, string> *root = NULL;
-    Ordered_Map<int, string> a;
-    int x;string y;
+    //Ordered_Map<int, string> *root = NULL;
+    Ordered_Map<string, char> a;
+    char v;
+    int q;
+    string k;
     for (int i = 1; i <= n; i++)
     {
-        cin >> x >> y;
-        root = a.insert(root,x, y);
-    }
+        cin >> q;
+        switch(q)
+        {
+            case 1: 
+            cin >> k >> v;
+            a.insert(k,v);
+            a.inorder(a.root);
+            break;
 
-    cout << "\n-------------------Before----------------\n";
-    a.inorder(root);
-     cout <<"\n-----------Size----------\n"; 
-    cout << a.size();
-    cout << endl;
-    a.deletion(root,14);
-    cout << "\n-------------------After----------------\n";
-    a.inorder(root);
-    cout << endl;
-    if(a.find(root,12)==1) cout <<"True";
-    else cout << "0";   
-    cout <<"\n-----------Size----------\n"; 
-    cout << a.size();
-    cout <<"\n-----------clear----------\n"; 
-    a.clear(root);
-    cout <<"\n-------------after clear-----\n";
-    a.inorder(root);
+            case 2:
+            cin >> k;
+            a.erase(k);
+            a.inorder(a.root);
+            break;
+
+            case 3:
+            cin >> k;
+            if(a.find(k)==1) 
+            cout << "True"<< endl;
+            else
+                cout <<"False";
+            break;
+
+            case 4:
+            cin >> c;
+            switch(c)
+            {
+            case 1:
+            cin >> k;
+            cout << a[k] << endl;
+            break;
+            case 2:
+            cin >> k;
+            cin >> v;
+            a[k]=v;
+            cout << a[k] << endl;
+            break;
+            }
+            break;
+
+            case 5:
+            cout << a.size()<< endl;
+            break;
+
+            case 6:
+            a.clear();
+            break;
+
+            default:
+            break;
+        }
+    }
     return 0;
 }

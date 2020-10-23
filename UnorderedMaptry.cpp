@@ -19,17 +19,16 @@ public:
     }
     int calculatehash(K key)
     {
-        int prime = 37;
+        int prime=37;
         ostringstream s1;
         s1 << key;
         string s = s1.str();
+        int len=s.size();
         int hashvalue = 0;
         int mul = 1;
-        for (int i = 0; i < s.size(); i++)
+        for (int i = 1; i < len; i++)
         {
-            hashvalue += (s[i] * mul);
-            hashvalue %= 101;
-            mul *= prime;
+            hashvalue = ((hashvalue*prime)+s[i])%101;
         }
         return hashvalue;
     }
@@ -151,7 +150,7 @@ public:
         return false;
     }
 
-    void print_all_LL()
+    void print()
     {
         for (int i = 0; i < 101; i++)
         {
@@ -190,24 +189,46 @@ public:
 
 int main()
 {
-    int n, m1;
-    cin >> n;
-    string s;
     Unordered_Map<int, string> m;
-    for (int i = 0; i < n; i++)
+    int n,c;
+    cin >> n;
+    int key;
+    string value;
+
+    for(int i=0;i<n;i++)
     {
-        cin >> m1 >> s;
-        m.insert(m1, s);
+        cin >> c;
+        switch(c)
+        {
+            case 1:  
+                cin >> key >> value;
+                m.insert(key,value);
+                break;
+
+            case 2:
+                cin >> key;
+                m.erase(key);
+                break;
+            
+            case 3:
+                cin >> key;
+                if(m.find(key)==0)
+                cout << "False";
+                else
+                cout << "True";
+                break;
+
+            case 4:
+                cin >> key;
+                cout << m[key] << endl;
+                break;
+
+            case 5:
+                m.print();
+                break;
+
+            default: break;
+        }
     }
-    m.print_all_LL();
-    cout << endl;
-    if (m.find(12) == 0)
-        cout << "False";
-    else
-        cout << "True";
-    m.erase(12);
-    m.print_all_LL();
-    cout << "---------------------";
-    cout << m[14];
     return 0;
 }
